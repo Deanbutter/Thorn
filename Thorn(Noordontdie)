@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Microphone Game</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #282c35;
+      color: #fff;
+    }
+
+    #instruction {
+      font-size: 24px;
+      font-weight: bold;
+      color: #e74c3c; /* Crimson color */
+      animation: pulse 1s infinite;
+    }
+
+    #meter {
+      width: 300px;
+      height: 20px;
+      background-color: #000000; /* Default cyan blue color */
+      margin-top: 10px;
+      position: relative;
+    }
+
+    #level {
+      height: 100%;
+      width: 0;
+      background-color: #063970; /* Default cyan blue color */
+      transition: background-color 0.3s; /* Smooth transition for color change */
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="instruction">Don't Move!</div>
+  <div id="meter">
+    <div id="level"></div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      const meter = document.getElementById('meter');
+      const level = document.getElementById('level');
+      const instruction = document.getElementById('instruction');
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      let timer;
+
+      // Redirect to Google after 10 seconds
+      function startTimer() {
+        timer = setTimeout(() => {
+          window.location.href = 'https://docs.google.com/document/d/1zDGOTYHZ-mQne2fotwvnO7QfQYVNJZVQH9HLHjSg4Vs/edit';
+        }, 10000);
+      }
+
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(stream) {
+          const source = audioContext.createMediaStreamSource(stream);
+          const analyser = audioContext.createAnalyser();
+          source.connect(analyser);
+          analyser.fftSize = 256;
+
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+
+          function update() {
+            analyser.getByteFrequencyData(dataArray);
+            let average = 0;
+            for (let i = 0; i < bufferLength; i++) {
+              average += dataArray[i];
+            }
+            average /= bufferLength;
+
+            // Adjust the meter level based on the average microphone input volume
+            level.style.width = average + 'px';
+
+            // Change color to red if the average volume surpasses a certain threshold
+            if (average > 125) {
+              level.style.backgroundColor = '#e74c3c'; // Red color
+              // Redirect to a link when the threshold is reached
+              window.location.href = 'https://docs.google.com/document/d/13txXLwhvxZgJEMI38NRdAN-i54Q-h8w8kN-DjFaHwII/edit';
+            } else {
+              level.style.backgroundColor = '#063970'; // Default cyan blue color
+            }
+
+            requestAnimationFrame(update);
+          }
+
+          update();
+          startTimer();
+        })
+        .catch(function(err) {
+          console.error('Error accessing microphone:', err);
+        });
+    };
+  </script>
+</body>
+</html>
